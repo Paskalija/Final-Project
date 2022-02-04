@@ -10,15 +10,18 @@ var usersRouter = require('./routes/users');
 const postsRouter = require('./routes/posts');
 const cors = require('cors');
 
+const jwt = require('jsonwebtoken')
+
 
 var app = express();
 
 require('dotenv').config();
 
-mongoose.connect(`mongodb+srv://paskalija:${process.env.MONGODB_PASSWORD}@cluster0.q56jz.mongodb.net/test`)
+mongoose.connect(`mongodb+srv://paskalija:paskalija@cluster0.q56jz.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`)
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.use(express.static('public')); 
+
 app.set('view engine', 'ejs');
 
 app.use(cors());
@@ -26,11 +29,13 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/posts', postsRouter);
+
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

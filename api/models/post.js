@@ -11,16 +11,16 @@ const postSchema = mongoose.Schema({
         required: true
     },
     preparation_time: {
-        type: String,
+        type: Number,
         required: true
     },
-    seen:{
-        type:Number,
+    view: {
+        type: Number,
         default: 0,
         required: true
     },
     number_of_people: {
-        type: String,
+        type: Number,
         required: true
     },
     short_description: {
@@ -35,7 +35,11 @@ const postSchema = mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'user'
     },
-   
+    image: {
+        type: String,
+        required: true
+    }
+
 
 }, { timestamps: true });
 

@@ -7,7 +7,10 @@ require('dotenv').config();
 module.exports = {
   myProfile: async (req, res) => {
     try {
-      user = await User.findById(req.user.id)
+      const user = await User.findById(req.user.id);
+      if (user.image == null) {
+        user.image = ""
+      }
       res.send({
         err: false,
         message: `My profile`,
@@ -24,21 +27,21 @@ module.exports = {
 
   register: async (req, res) => {
     try {
-      let user = await User.findOne({ email: req.body.email })
+      const user = await User.findOne({ email: req.body.email });
       if (user) {
-        throw new Error('This email is already taken!')
+        throw new Error('This email is already taken!');
       }
 
       if (req.body.repeat_password === req.body.password) {
-        req.body.password = bcrypt.hashSync(req.body.password)
-        user = await User.create(req.body)
+        req.body.password = bcrypt.hashSync(req.body.password);
+        user = await User.create(req.body);
       }
       else {
-        throw new Error("Passwords don't match")
+        throw new Error("Passwords don't match");
       }
       res.send({
         error: false,
-        message: 'New user record created!',
+        message: 'User created!',
         user: user
       });
     }
@@ -53,34 +56,30 @@ module.exports = {
 
   login: async (req, res) => {
     try {
-
       const user = await User.findOne({ email: req.body.email });
-
-
       if (!user) {
-        throw new Error('Invalid credentials');
+        throw new Error('No user was found!');
       }
 
       if (!bcrypt.compareSync(req.body.password, user.password)) {
-        throw new Error('Invalid credentials');
+        throw new Error('Not a match!');
       }
-
-
+      
       const payload = {
         id: user._id,
-        email: user.email
+        email: user.email,
+
       }
-
       const token = jwt.sign(payload, process.env.AUTH_SECRET, {
-        expiresIn: '50m'
-      }); 
-
+        expiresIn: '7h'
+      });
       res.send({
-        error: false,
-        message: 'User logged in',
+        err: false,
+        message: "User logged in ",
         token: token
       });
-    } catch (error) {
+    }
+    catch (error) {
       res.send({
         error: true,
         message: error.message
@@ -89,15 +88,25 @@ module.exports = {
   },
   update: async (req, res) => {
     try {
-      await User.findByIdAndUpdate(req.user.id, req.body);
-      if (!req.body.confirmPASS === req.body.password) {
-        throw new Error('Incorrect Password')
+      const user = await User.findById(req.user.id)
+      if (req.file) {
+        req.body.image = `http://localhost:7000/images/${req.file.filename}`;
+      }else {
+        req.body.image = user.image;
       }
 
+      if (req.body.password) {
+        req.body.password = bcrypt.hashSync(req.body.password);
+      }else {
+        req.body.password = user.password;
+      }
+
+      user = await User.findByIdAndUpdate(req.user.id, req.body)
       res.send({
-        error: false,
-        message: `User ${req.body.first_name} has been updated.`
+        err: false,
+        message: 'You just updated your profile!'
       })
+      
     } catch (error) {
       res.send({
         error: true,
@@ -105,6 +114,7 @@ module.exports = {
       })
     }
   },
+ 
   logout: (req, res) => {
     try {
       const payload = {
@@ -115,28 +125,15 @@ module.exports = {
       const token = jwt.sign(payload, process.env.AUTH_SECRET, {
         expiresIn: '3s'
       });
-      res.send(token);
-    }
-    catch (err) {
+
+      res.send({
+        error: false,
+        token: token
+      });
+    } catch (err) {
       res.send({
         err: true,
         message: err.message
-      })
-    }
-  },
-  getUpdate: async (req, res) => {
-    try {
-      user = await User.findById(req.user.id);
-      res.send({
-        error: false,
-        message: `User ${req.user.first_name}`,
-        user: user
-      })
-    }
-    catch (err) {
-      res.send({
-        error: true,
-        message: error.message
       })
     }
   },

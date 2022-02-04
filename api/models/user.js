@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
+
 const userSchema = mongoose.Schema({
+  testImage: {
+    type: Object,
+    required: false
+  },
   first_name: {
     type: String,
     required: true
@@ -25,7 +30,12 @@ const userSchema = mongoose.Schema({
   repeat_password: {
       type: String,
       required: true
-  }
+  },
+  image: {
+    type: String,
+    required: false
+},
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('user', userSchema)

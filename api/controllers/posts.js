@@ -1,14 +1,13 @@
 const Post = require('../models/post');
-const User = require('../models/user');
-const { post } = require('../routes');
+
 
 module.exports = {
   myRecipes: async (req, res) => {
     try {
-      posts = await Post.find({ user: req.user.id })
+      const posts = await Post.find({ user: req.user.id })
       res.send({
         err: false,
-        message: `List of recipes from ${req.user.first_name}`,
+        message: "List of your recipes!",
         posts: posts
       })
     }
@@ -21,18 +20,18 @@ module.exports = {
   },
   view: async (req, res) => {
     try {
-      const post = await Post.findById(req.params.id)
-     await Post.findOneAndUpdate(req.params.id);
-      post.review += 1;
+      const post = await Post.findById(req.params.id);
+      post.view += 1;
+      await Post.findOneAndUpdate(req.params.id);
       post.save()
-  
-       res.send({
+
+      res.send({
         error: false,
-        message: "This post was visited",
+        message: "One more click on this post!",
         post: post
       });
-    
-   } catch (error) {
+
+    } catch (error) {
       res.send({
         error: true,
         message: error.message
@@ -42,11 +41,12 @@ module.exports = {
   create: async (req, res) => {
     try {
       req.body.user = req.user.id;
+      req.body.image = `http://localhost:7000/images/${req.file.filename}`;
       const post = await Post.create(req.body);
 
-      res.status(201).send({
+      res.send({
         error: false,
-        message: `User with id #${req.body.user} has just created a new post!`,
+        message: 'You just created a new recipe!',
         post: post
       });
     } catch (error) {
@@ -58,10 +58,10 @@ module.exports = {
   },
   delete: async (req, res) => {
     try {
-      await Post.findByIdAndDelete(req.params.id)
+      await Post.deleteOne({ _id: req.params.id })
       res.send({
         error: false,
-        message: "Deleted"
+        message: "Recipe deleted!"
       });
     }
     catch (error) {
@@ -74,25 +74,26 @@ module.exports = {
   },
   homePage: async (req, res) => {
     try {
-     const limitNumber = 3;
-     const freshNew = await Post.find({}).sort({createdAt: -1}).limit(limitNumber);
-     const mostPopular = await Post.find({}).sort({review: -1}).limit(limitNumber);
-     res.send({
-       error: false,
-       message: 'Home page',
-       freshNew: freshNew,
-       mostPopular: mostPopular
-     });
-   } catch (error) {
-     res.send({
-       error: true,
-       message: error.message
-     })
-   }  
-   },
+      const showFreshAndNew = 3;
+      const showMostPopular = 6;
+      const freshNew = await Post.find({}).sort({ createdAt: -1 }).limit(showFreshAndNew);
+      const mostPopular = await Post.find({}).sort({ view: -1 }).limit(showMostPopular);
+      res.send({
+        error: false,
+        message: 'Home page',
+        freshNew: freshNew,
+        mostPopular: mostPopular
+      });
+    } catch (error) {
+      res.send({
+        error: true,
+        message: error.message
+      })
+    }
+  },
   breakfast: async (req, res) => {
     try {
-      posts = await Post.find({ category: 'Breakfast' });
+      const posts = await Post.find({ category: 'Breakfast' });
 
       res.send({
         error: false,
@@ -154,19 +155,46 @@ module.exports = {
       });
     }
   },
+
   update: async (req, res) => {
     try {
-      await Post.findByIdAndUpdate(req.user.id, req.body);
+      const post = await Post.findById(req.body.id);
+
+      if (req.file) {
+        req.body.image = `http://localhost:7000/images/${req.file.filename}`;
+      } else {
+        req.body.image = post.image;
+      }
+
+       await Post.findByIdAndUpdate(req.body.id, req.body);
 
       res.send({
         error: false,
-        message: `Post ${req.body.title} has been updated`
-      })
+        message: 'You just updated your recipe!'
+      });
     } catch (error) {
       res.send({
         error: true,
         message: error.message
       })
     }
-  }
+  },
+
+  recipe: async (req, res) => {
+    try {
+      const post = await Post.findById({ _id: req.params.id })
+      res.send({
+        err: false,
+        message: "Here is your recipe!",
+        post: post
+      })
+    }
+    catch (err) {
+      res.send({
+        err: true,
+        message: err.message
+      })
+    }
+  },
+
 }
